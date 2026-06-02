@@ -1,0 +1,8 @@
+data/
+*.parquet
+*.sas7bdat
+.env
+.pgpass
+__pycache__/
+*.pyc
+.venv/

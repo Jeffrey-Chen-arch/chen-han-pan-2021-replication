@@ -1,0 +1,242 @@
+project:
+  name: "chen_han_pan_table3_table4_replication"
+  root: "<PROJECT_ROOT>/Desktop/research/salman arif/6.1"
+  run_label: "main_professor_proxy"
+  timezone: "America/New_York"
+  output_timestamp_format: "%Y%m%d_%H%M%S"
+
+sample:
+  start_month: "1994-01"
+  end_month: "2018-12"
+  first_portfolio_formation_month: "1996-12"
+  first_portfolio_return_month: "1997-01"
+  rolling_window_months: 36
+  min_obs_rolling: 30
+  min_obs_fund_total: 30
+  backfill_drop_observations: 12
+
+  # Paper ambiguity:
+  # Paper says delete funds with AUM below $5 million.
+  # Main implementation uses a defensible hybrid (see alternative_specs.yaml).
+  min_aum_million: 5.0
+  aum_filter_main: "fund_has_any_aum_ge_5_and_drop_obs_below_5_if_nonmissing"
+  aum_filter_sensitivity:
+    - "strict_drop_obs_missing_or_below_5"
+    - "fund_ever_aum_ge_5_keep_all_obs"
+
+  currency_keep:
+    - "USD"
+    - "US Dollar"
+    - "U.S. Dollar"
+
+  exclude_strategies:
+    - "Emerging Markets"
+    - "Fixed Income Arbitrage"
+    - "Managed Futures"
+    - "Dedicated Short Bias"
+
+  drop_missing_redemption_main: true
+  redemption_sensitivity:
+    - "keep_missing_redemption_flagged"
+
+  # Main Table III/IV fund returns are NOT winsorized unless SAS explicitly requires it.
+  # Continuous fund characteristics used as Table IV controls are winsorized at 1/99.
+  winsorize_controls_lower: 0.01
+  winsorize_controls_upper: 0.99
+  winsorize_returns_main: false
+  winsorize_tableIV_controls: true
+  # Explicit guards so the build never regresses to a strict missing-AUM drop:
+  drop_missing_aum_main: false
+  keep_missing_aum_obs_for_table3_if_fund_passes_screen: true
+  table4_requires_nonmissing_size: true
+
+factors:
+  unit: "percent_per_month_where_applicable"
+  start_month: "1994-01"
+  end_month: "2018-12"
+
+  main_sentiment_source_priority:
+    - "professor_wurgler_vintage_with_dsent"
+    - "professor_wurgler_vintage_constructed_change"
+    - "public_wurgler_current_constructed_change"
+    - "author_sample_anchor_diagnostic_only"
+
+  sentiment_main_column: "sentiment_change"
+  allow_sample_anchor_mismatch: true
+  # Sentiment is built as AUDITED CANDIDATES, not a locked choice. Select by source priority
+  # + coverage-through-2018 + Table II-like moments + correlations + naming; NEVER by which
+  # candidate best matches Table III/IV.
+  sentiment_construction_rule:
+    step1_use_direct_changes_column_if_present: ["DSENT", "DSENT_", "SENT_CHG", "sentiment_changes", "dsent"]
+    step2_else_build_candidates: ["delta_SENT_ORTH", "delta_SENT"]
+    step3_investigate_bw_changes_index_pca: true   # BW "changes index" = 1st PC of CHANGES in proxies (2007), not necessarily delta of the level index
+    cleaned_vintage_role: "sensitivity_only_ends_2015_11"
+    sampledata_dsent_anchor_role: "diagnostic_only_not_a_gate"
+
+  term_s_main: "GS10_minus_TB3MS_level"
+  credit_s_main: "delta_DBAA_minus_DGS10_month_end"
+  def_main: "BAA_minus_AAA_level"
+  inf_main: "simple_percent_change_CPIAUCSL"
+  liquidity_main: "pastor_stambaugh_last_column"
+
+  urls:
+    ken_french_ff3: "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip"
+    ken_french_momentum: "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor_CSV.zip"
+    hsieh_page: "https://people.duke.edu/~dah7/HFRFData.htm"
+    pastor_stambaugh_liq: "https://finance.wharton.upenn.edu/~stambaug/liq_data_1962_2025.txt"
+
+  fred_series:
+    - "GS10"
+    - "TB3MS"
+    - "DBAA"
+    - "DGS10"
+    - "BAA"
+    - "AAA"
+    - "CPIAUCSL"
+    - "UMCSENT"
+
+regressions:
+  newey_west_lags: 2
+  # PAPER-SPECIFIED: text + Table III/IV notes state "Newey-West (1987) standard errors with
+  # two lags" (fn.16: based on monthly hedge-fund return autocorrelation). NOT an open choice.
+  newey_west_lags_source: "paper_specified_two_lags_table_III_IV"
+  nw_small_sample_correction_main: false
+  nw_small_sample_correction_sensitivity: true
+  include_constant: true
+  min_cross_section_buffer: 10
+
+table3:
+  number_of_portfolios: 10
+  weighting: "equal"
+  sort_variable: "sentiment_beta"
+  portfolio_1: "low_sentiment_beta"
+  portfolio_10: "high_sentiment_beta"
+  spread_direction: "portfolio_10_minus_portfolio_1"
+
+  beta_estimation_factors:
+    - "sentiment_change"
+    - "mktrf"
+    - "smb"
+    - "term_s"
+    - "credit_s"
+    - "ptfsbd"
+    - "ptfsfx"
+    - "ptfscom"
+    - "umd"
+    - "liq_v"
+    - "INF"
+    - "def"
+
+  alpha_factors:
+    - "mktrf"
+    - "smb"
+    - "term_s"
+    - "credit_s"
+    - "ptfsbd"
+    - "ptfsfx"
+    - "ptfscom"
+    - "umd"
+    - "liq_v"
+
+table4:
+  dependent_variables:
+    - "excess_return_next_month"
+    - "alpha_next_month"
+
+  alpha_factor_loadings:
+    - "mktrf"
+    - "smb"
+    - "term_s"
+    - "credit_s"
+    - "ptfsbd"
+    - "ptfsfx"
+    - "ptfscom"
+    - "umd"
+    - "liq_v"
+
+  # SAS-aligned MAIN controls (exact author-code variables): LAGGED size/age, lockup DUMMY, notice in months.
+  controls_sas_aligned:
+    - "lag_log_fund_size"      # lagfundsize1 = lag1(fundsize); fundsize = ln(usdaum)
+    - "lag_log_fund_age"       # lagage1 = lag1(log_age)
+    - "management_fee"
+    - "incentive_fee"
+    - "high_water_mark"
+    - "lockup_dummy"           # lockup_d = 1(lockup > 0)
+    - "notice_period_months"   # notice / 30
+  # Paper-text SENSITIVITY controls (contemporaneous size/age, continuous lockup).
+  controls_paper_text_sensitivity:
+    - "log_fund_size"
+    - "log_fund_age"
+    - "management_fee"
+    - "incentive_fee"
+    - "high_water_mark"
+    - "lockup_period"
+    - "notice_period_months"
+  style_dummies: ["ca", "emn", "gm", "lseh", "ms", "fof"]
+  # Output tables show published labels; internal vars stay SAS-aligned (lagged/dummy).
+  published_labels:
+    lag_log_fund_size: "Log(fund size)"
+    lag_log_fund_age: "Log(fund age)"
+    lockup_dummy: "Lockup period"
+    notice_period_months: "Notice period"
+
+  include_style_dummies_multivariate: true
+  omit_one_style_dummy: true
+
+validation:
+  paper_final_fund_count_target: 4073
+  hard_min_final_funds: 500
+  hard_min_table3_months: 100
+  hard_min_table4_months: 100
+  allow_candidate_tables_if_validation_fails: true
+  forbid_final_label_if_major_gate_fails: true
+
+outputs:
+  main_workbook: "output/tables/chp_replication_results.xlsx"
+  memo_file: "output/memo/replication_memo.md"
+  discrepancy_file: "output/diagnostics/discrepancy_audit.xlsx"
+  package_folder: "output/package_for_professor"
+
+author_replication:
+  use_author_sas_as_primary_final_table_logic: true
+  replication_zip_role: "author_final_table_logic_and_sampledata_dictionary"
+  sampledata_role: "diagnostic_anchor_not_full_sample"
+
+  expected_files:
+    - "Code/PortfolioSorts.sas"
+    - "Code/Beta&Performance.sas"
+    - "Code/Figure1.sas"
+    - "SampleData/all-sample.sas7bdat"
+    - "SampleData/funddetail-sample.sas7bdat"
+
+  table3:
+    sas_rank_variable: "R_sent"
+    sas_rank_zero_is: "highest_sentiment_beta"
+    sas_rank_nine_is: "lowest_sentiment_beta"
+    python_published_mapping:
+      portfolio_10_high: "sas_R_sent_0"
+      portfolio_1_low: "sas_R_sent_9"
+      spread_10_minus_1: "sas_0_minus_9"
+    beta_window_sas_logic: "previous_36_months_before_evaluation_month"
+    beta_window_condition_from_sas: "1 <= evaluation_monthid - historical_monthid < 37"
+    first_evaluation_month: "1997-01"
+    first_beta_window: "1994-01_to_1996-12"
+
+  table4:
+    table4_alpha_main: "sas_full_sample_by_fund_factor_loadings"
+    table4_alpha_sensitivity: "paper_text_rolling_36m_factor_loadings"
+    use_lagged_size_and_age_in_sas_aligned_model: true
+    lagged_controls_from_sas:
+      - "lagfundsize1"
+      - "lagage1"
+    sas_style_dummies:
+      - "ca"
+      - "emn"
+      - "gm"
+      - "lseh"
+      - "ms"
+      - "fof"
+
+  warning_language:
+    sampledata_anchor: "diagnostic_only_not_hard_gate"
+    sas_vs_paper_alpha_difference: "document_do_not_hide"

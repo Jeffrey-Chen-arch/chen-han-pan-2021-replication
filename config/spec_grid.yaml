@@ -1,0 +1,284 @@
+# Pre-registered admissible specification grid for Stage-5 replication tournament.
+# Every spec has academic justification (paper / SAS / Professor / Internet Appendix / TASS field
+# ambiguity / standard convention). Selection is by transparent scoring, NOT by which gives the
+# best Table III/IV result. All results retained.
+
+# ----- SAMPLE specs -----
+sample_specs:
+  S0_paper_strict_current:
+    label: "Paper-strict baseline (Sec I)"
+    admissibility: "main"
+    include_categories: "paper_7"
+    currency_rule: "usd_code_only"
+    net_return_rule: "strict_net"
+    redemption_keep_missing: false
+    aum_rule: "hybrid"
+    min_aum_threshold: 5.0
+    backfill_drop_obs: 12
+    duplicate_rule: "exact_and_highconf"
+    min_total_obs: 30
+
+  S1_redemption_keep_missing:
+    base: "S0_paper_strict_current"
+    redemption_keep_missing: true
+    admissibility: "sensitivity_admissible"
+    justification: "TASS 'None'/'Not Defined' may be missing-redemption (not non-monthly); paper says monthly-or-better"
+
+  S2_aum_fund_level_ever_ge5:
+    base: "S0_paper_strict_current"
+    aum_rule: "lenient"
+    admissibility: "sensitivity_admissible"
+    justification: "Paper '>=5m' may be fund-level not obs-level"
+
+  S3_redemption_keep_missing_plus_aum_lenient:
+    base: "S0_paper_strict_current"
+    redemption_keep_missing: true
+    aum_rule: "lenient"
+    admissibility: "sensitivity_admissible"
+    justification: "Both missing-data interpretations lenient"
+
+  S4_currency_usd_code_or_description:
+    base: "S0_paper_strict_current"
+    currency_rule: "usd_code_or_description"
+    admissibility: "sensitivity_admissible"
+    justification: "TASS currencycode vs currencydescription ambiguity; both may indicate USD"
+
+  S5_currency_usd_or_missing_flagged:
+    base: "S0_paper_strict_current"
+    currency_rule: "usd_or_missing"
+    admissibility: "diagnostic"
+    justification: "Missing currencycode may default to USD; diagnostic upper bound"
+
+  S6_net_return_keep_missing:
+    base: "S0_paper_strict_current"
+    net_return_rule: "net_or_missing"
+    admissibility: "sensitivity_admissible"
+    justification: "TASS grossnett missing may not imply gross; paper says net-of-fee"
+
+  S7_exact_duplicates_only:
+    base: "S0_paper_strict_current"
+    duplicate_rule: "exact_only"
+    admissibility: "sensitivity_admissible"
+    justification: "Drop high-confidence identical-history rule may over-remove"
+
+  S8_no_duplicate_removal:
+    base: "S0_paper_strict_current"
+    duplicate_rule: "none"
+    admissibility: "diagnostic"
+    justification: "Diagnostic upper bound (no dedup)"
+
+  S9_all_11_categories:
+    base: "S0_paper_strict_current"
+    include_categories: "all_11"
+    admissibility: "internet_appendix"
+    justification: "Internet Appendix IA.I robustness"
+    paper_target:
+      table: "IA.I"
+      excess_spread: 0.39
+      excess_t: 3.04
+      alpha_spread: 0.52
+      alpha_t: 2.61
+
+  S10_alternative_filters_24m_10m:
+    base: "S0_paper_strict_current"
+    backfill_drop_obs: 24
+    aum_rule: "hybrid"
+    min_aum_threshold: 10.0
+    admissibility: "internet_appendix"
+    justification: "Internet Appendix IA.II robustness"
+    paper_target:
+      table: "IA.II"
+      excess_spread: 0.34
+      excess_t: 3.17
+      alpha_spread: 0.55
+      alpha_t: 3.04
+
+  S13_old_tass_schema:
+    base: "S0_paper_strict_current"
+    tass_source: "tr_tass_old"
+    admissibility: "sensitivity_admissible"
+    justification: "TASS vintage ambiguity; closer to author 2018 snapshot"
+
+  S14_fund_identifier_name_company_cluster:
+    base: "S0_paper_strict_current"
+    fund_identifier_rule: "name_company_cluster"
+    admissibility: "diagnostic_high_value"
+    justification: "productreference may = share class, not paper 'fund'; cluster by Management Firm companyid + primarycategory + currencycode"
+    audit_finding: >
+      CAUTION (corrected audit 26): this companyid x category x currency key OVER-AGGREGATES distinct
+      funds run by the same firm; it moves the count DOWN (2,270 -> ~1,396), not toward 4,073. It is a
+      diagnostic lower bound, NOT a valid 'fund' unit. See stage5A_identifier_audit_corrected.xlsx.
+
+  S23_finer_shareclass_or_vehicle_identifier:
+    base: "S0_paper_strict_current"
+    fund_identifier_rule: "productreference_plus_shareclass_or_vehicle_if_available"
+    admissibility: "diagnostic_high_value"
+    justification: "Test whether a unit FINER than productreference exists (paper count > ours)."
+    audit_finding: >
+      NOT CONSTRUCTIBLE: the WRDS-anonymized TASS has NO isin/cusip/sedol/shareclassreference/vehicle/
+      fundreference field in any of 48 tables, and `name` is anonymized 1:1 with productreference.
+      productreference is therefore already the FINEST available unit; this spec cannot be run.
+
+  # ----- Interaction specs S15-S22: combine relaxations (per expert review) -----
+  S15_all11_keep_missing_redemption:
+    base: "S0_paper_strict_current"
+    include_categories: "all_11"
+    redemption_keep_missing: true
+    admissibility: "diagnostic"
+    justification: "Interaction: all-11 categories x keep-missing-redemption (IA + sensitivity combined)"
+
+  S16_all11_aum_lenient:
+    base: "S0_paper_strict_current"
+    include_categories: "all_11"
+    aum_rule: "lenient"
+    admissibility: "diagnostic"
+    justification: "Interaction: all-11 categories x fund-level AUM (IA + sensitivity combined)"
+
+  S17_all11_keep_missing_aum_lenient:
+    base: "S0_paper_strict_current"
+    include_categories: "all_11"
+    redemption_keep_missing: true
+    aum_rule: "lenient"
+    admissibility: "diagnostic"
+    justification: "Interaction: all-11 x keep-missing-redemption x lenient AUM"
+
+  S18_all11_keep_missing_aum_lenient_currency_loose:
+    base: "S0_paper_strict_current"
+    include_categories: "all_11"
+    redemption_keep_missing: true
+    aum_rule: "lenient"
+    currency_rule: "usd_code_or_description"
+    admissibility: "diagnostic"
+    justification: "Maximally lenient admissible interaction (all relaxations on)"
+
+  S19_cluster_keep_missing_redemption:
+    base: "S14_fund_identifier_name_company_cluster"
+    redemption_keep_missing: true
+    admissibility: "diagnostic_high_value"
+    justification: "Cluster identifier x keep-missing-redemption (does clustering interact with the redemption filter?)"
+
+  S20_cluster_aum_lenient:
+    base: "S14_fund_identifier_name_company_cluster"
+    aum_rule: "lenient"
+    admissibility: "diagnostic_high_value"
+    justification: "Cluster identifier x lenient AUM"
+
+  S21_cluster_all11:
+    base: "S14_fund_identifier_name_company_cluster"
+    include_categories: "all_11"
+    admissibility: "diagnostic_high_value"
+    justification: "Cluster identifier x all-11 categories"
+
+  S22_cluster_max_lenient:
+    base: "S14_fund_identifier_name_company_cluster"
+    redemption_keep_missing: true
+    aum_rule: "lenient"
+    include_categories: "all_11"
+    currency_rule: "usd_code_or_description"
+    admissibility: "diagnostic_high_value"
+    justification: "Cluster identifier x maximally lenient admissible interaction"
+
+# ----- SENTIMENT specs -----
+sentiment_specs:
+  M0_direct_DSENT_if_available:
+    construction: "use_direct_DSENT_if_present"
+    admissibility: "main_if_available"
+  M1_full_BW_corrPCA:
+    construction: "full_BW_changes_correlation_PCA"  # current sent_change_pca
+    admissibility: "main_candidate"
+  M2_full_BW_covPCA:
+    construction: "full_BW_changes_covariance_PCA"
+    admissibility: "main_candidate"
+  M5_delta_SENT_ORTH_scaled:
+    construction: "delta_SENT_ORTH"
+    scale_rule: "raw"
+    admissibility: "diagnostic_admissible"
+  M5b_delta_SENT_ORTH_tableII_scaled:
+    construction: "delta_SENT_ORTH"
+    scale_rule: "tableII_mean_sd_scaled"
+    admissibility: "diagnostic_admissible"
+  M6_delta_SENT_raw:
+    construction: "delta_SENT"
+    admissibility: "diagnostic"
+  M9_Michigan_dUMCSENT:
+    construction: "d_UMCSENT"
+    admissibility: "paper_tableV_diagnostic"
+    paper_target:
+      table: "Table V"
+      excess_spread: 0.26
+      excess_t: 1.88
+      alpha_spread: 0.58
+      alpha_t: 2.17
+
+# ----- FACTOR specs -----
+factor_specs:
+  F0_professor_fred_main:
+    term_s: "GS10_minus_TB3MS_level"
+    credit_s: "delta_DBAA_minus_DGS10"
+    admissibility: "main_professor_guided"
+  F1_hsieh_yield_change:
+    term_s: "delta_DGS10"
+    credit_s: "delta_DBAA_minus_DGS10"
+    admissibility: "sensitivity_hsieh"
+  F2_T10Y3M:
+    term_s: "FRED_T10Y3M_level"
+    credit_s: "delta_DBAA_minus_DGS10"
+    admissibility: "sensitivity_professor"
+    note: "FRED T10Y3M (10y-3m constant maturity) fetched 2026; full 300-month coverage."
+  F3_DGS10_minus_DGS3MO:
+    term_s: "DGS10_minus_DGS3MO_level"
+    credit_s: "delta_DBAA_minus_DGS10"
+    admissibility: "sensitivity_professor"
+    note: "10y minus 3m constant-maturity level (Professor-suggested alternative); FRED DGS3MO fetched 2026."
+
+# ----- TABLE III specs -----
+table3_specs:
+  P0_main:
+    holding_rule: "next_month"
+    admissibility: "main"
+    paper_target: {excess_spread: 0.31, excess_t: 3.16, alpha_spread: 0.59, alpha_t: 3.55}
+  P2_skip_one_month:
+    holding_rule: "skip_one_then_one"
+    admissibility: "internet_appendix"
+    paper_target: {excess_spread: 0.30, excess_t: 3.14, alpha_spread: 0.66, alpha_t: 3.99}
+  P3_two_step_beta:
+    beta_method: "two_step_5pct_significant"
+    admissibility: "internet_appendix"
+    paper_target: {excess_spread: 0.27, excess_t: 2.54, alpha_spread: 0.50, alpha_t: 2.92}
+
+# ----- TABLE IV specs -----
+table4_specs:
+  T0_sas_full_sample_alpha:
+    alpha_construction: "sas_full_sample_by_fund"
+    controls: "sas_lagged"
+    admissibility: "sas_main_candidate"
+  T1_paper_rolling_36m_alpha:
+    alpha_construction: "paper_rolling_36m"
+    controls: "paper_current"
+    admissibility: "paper_text_main_candidate"
+
+# ----- Paper targets for scoring -----
+paper_targets:
+  table1:
+    fund_return_mean: 0.59
+    fund_return_sd: 3.36
+    fund_size_mean: 181.48
+    fund_size_median: 55.99
+    fund_age_mean: 80.66
+    fund_age_median: 67
+    management_fee_mean: 1.35
+    management_fee_median: 1.50
+    incentive_fee_mean: 15.05
+    incentive_fee_median: 20
+    high_water_mark_mean: 0.67
+    lockup_dummy_mean: 0.32
+    notice_period_months_mean: 1.44
+  sample:
+    final_funds: 4073
+    months: 264
+  table2_sentiment:
+    mean: -0.50
+    sd: 1.39
+    corr_mktrf: 0.16
+    corr_smb: 0.22
+    corr_INF: 0.22

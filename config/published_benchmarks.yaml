@@ -1,0 +1,121 @@
+table3:
+  rows:
+    - portfolio: "1 (Low)"
+      sentiment_beta: -1.07
+      excess_return: 0.27
+      excess_t: 1.77
+      alpha: -0.08
+      alpha_t: -0.51
+    - portfolio: "2"
+      sentiment_beta: -0.45
+      excess_return: 0.25
+      excess_t: 1.94
+      alpha: 0.07
+      alpha_t: 0.59
+    - portfolio: "3"
+      sentiment_beta: -0.25
+      excess_return: 0.34
+      excess_t: 2.95
+      alpha: 0.14
+      alpha_t: 1.48
+    - portfolio: "4"
+      sentiment_beta: -0.14
+      excess_return: 0.30
+      excess_t: 2.85
+      alpha: 0.14
+      alpha_t: 1.34
+    - portfolio: "5"
+      sentiment_beta: -0.06
+      excess_return: 0.25
+      excess_t: 2.35
+      alpha: 0.04
+      alpha_t: 0.36
+    - portfolio: "6"
+      sentiment_beta: 0.02
+      excess_return: 0.25
+      excess_t: 2.51
+      alpha: 0.10
+      alpha_t: 0.96
+    - portfolio: "7"
+      sentiment_beta: 0.10
+      excess_return: 0.30
+      excess_t: 2.76
+      alpha: 0.12
+      alpha_t: 1.15
+    - portfolio: "8"
+      sentiment_beta: 0.21
+      excess_return: 0.34
+      excess_t: 2.99
+      alpha: 0.21
+      alpha_t: 1.99
+    - portfolio: "9"
+      sentiment_beta: 0.39
+      excess_return: 0.38
+      excess_t: 2.93
+      alpha: 0.26
+      alpha_t: 2.27
+    - portfolio: "10 (High)"
+      sentiment_beta: 0.96
+      excess_return: 0.58
+      excess_t: 3.48
+      alpha: 0.51
+      alpha_t: 2.98
+    - portfolio: "Spread (10-1)"
+      sentiment_beta: 2.03
+      excess_return: 0.31
+      excess_t: 3.16
+      alpha: 0.59
+      alpha_t: 3.55
+
+table4:
+  models:
+    excess_univariate:
+      dependent_variable: "Excess Return"
+      style_dummies: "No"
+      adjusted_r2: 0.01
+      coefficients:
+        sentiment_beta: {coeff: 0.17, t: 3.03}
+    excess_multivariate:
+      dependent_variable: "Excess Return"
+      style_dummies: "Yes"
+      adjusted_r2: 0.07
+      coefficients:
+        sentiment_beta: {coeff: 0.16, t: 2.84}
+        log_fund_size: {coeff: 0.01, t: 0.12}
+        log_fund_age: {coeff: -0.03, t: -0.95}
+        management_fee: {coeff: 0.04, t: 1.34}
+        incentive_fee: {coeff: -0.01, t: -0.14}
+        high_water_mark: {coeff: 0.15, t: 4.76}
+        lockup_period: {coeff: 0.06, t: 1.55}
+        notice_period: {coeff: 0.06, t: 3.80}
+    alpha_univariate:
+      dependent_variable: "Alpha"
+      style_dummies: "No"
+      adjusted_r2: 0.01
+      coefficients:
+        sentiment_beta: {coeff: 0.14, t: 3.31}
+    alpha_multivariate:
+      dependent_variable: "Alpha"
+      style_dummies: "Yes"
+      adjusted_r2: 0.05
+      coefficients:
+        sentiment_beta: {coeff: 0.12, t: 3.16}
+        log_fund_size: {coeff: 0.01, t: 0.21}
+        log_fund_age: {coeff: 0.06, t: 2.13}
+        management_fee: {coeff: 0.02, t: 1.14}
+        incentive_fee: {coeff: 0.01, t: 2.31}
+        high_water_mark: {coeff: 0.11, t: 4.81}
+        lockup_period: {coeff: -0.06, t: -2.24}
+        notice_period: {coeff: 0.07, t: 5.83}
+
+table2_validation_targets:
+  sentiment_changes:
+    mean: -0.50
+    sd: 1.39
+    p25: -1.38
+    median: -0.30
+    p75: 0.47
+  correlations:
+    sentiment_mktrf: 0.16
+    sentiment_smb: 0.22
+    sentiment_INF: 0.22
